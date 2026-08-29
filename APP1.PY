@@ -6,6 +6,38 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
 import datetime
+import os
+
+# Data storage (CSV files on disk)
+DATA_DIR = "data"
+os.makedirs(DATA_DIR, exist_ok=True)
+RESULTS_COLUMNS = ['Mã chỉ tiêu', 'Giá_trị_thực_hiện', 'Ghi_chú', 'Người_nhập', 'Thời_điểm', 'Trạng_thái']
+LOCKED_YEARS_PATH = os.path.join(DATA_DIR, "locked_years.csv")
+
+
+def results_path(year):
+    return os.path.join(DATA_DIR, f"results_{year}.csv")
+
+
+def load_results(year):
+    path = results_path(year)
+    if os.path.exists(path):
+        return pd.read_csv(path)
+    return pd.DataFrame(columns=RESULTS_COLUMNS)
+
+
+def save_results(year):
+    st.session_state.results[year].to_csv(results_path(year), index=False)
+
+
+def load_locked_years():
+    if os.path.exists(LOCKED_YEARS_PATH):
+        return pd.read_csv(LOCKED_YEARS_PATH)['Năm'].tolist()
+    return []
+
+
+def save_locked_years():
+    pd.DataFrame({'Năm': st.session_state.locked_years}).to_csv(LOCKED_YEARS_PATH, index=False)
 
 # Indicators data from the updated document
 data = {
@@ -53,9 +85,9 @@ if 'logged_in' not in st.session_state:
     st.session_state.role = None
     st.session_state.user = None
 if 'results' not in st.session_state:
-    st.session_state.results = {year: pd.DataFrame(columns=['Mã chỉ tiêu', 'Giá_trị_thực_hiện', 'Ghi_chú', 'Người_nhập', 'Thời_điểm', 'Trạng_thái']) for year in range(2026, 2031)}
+    st.session_state.results = {year: load_results(year) for year in range(2026, 2031)}
 if 'locked_years' not in st.session_state:
-    st.session_state.locked_years = []
+    st.session_state.locked_years = load_locked_years()
 
 # Login logic (same as before)
 if not st.session_state.logged_in:
@@ -107,10 +139,12 @@ else:
                         'Trạng_thái': ['Nháp']
                     })
                     st.session_state.results[year] = pd.concat([results[results['Mã chỉ tiêu'] != row['Mã chỉ tiêu']], new_row])
+                    save_results(year)
                     st.success("Đã lưu")
 
             if st.button("Gửi báo cáo"):
                 st.session_state.results[year].loc[st.session_state.results[year]['Người_nhập'] == st.session_state.user, 'Trạng_thái'] = 'Đã gửi'
+                save_results(year)
                 st.success("Đã gửi, không sửa được nữa")
 
         st.dataframe(df.style.apply(lambda x: ['background-color: ' + x['Màu']] * len(x) if 'Màu' in x.name else None, axis=1))
@@ -140,6 +174,7 @@ else:
 
         if st.button("Khóa năm"):
             st.session_state.locked_years.append(year)
+            save_locked_years()
             st.success(f"Đã khóa năm {year}")
 
         # Export functions (same as before)
