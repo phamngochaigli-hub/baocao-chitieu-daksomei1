@@ -19,7 +19,7 @@ Chạy trên **Google Apps Script**: miễn phí, không cần máy chủ, ngư�
 ## Cài đặt (khoảng 10 phút)
 1. Vào https://script.google.com → **Dự án mới**, đặt tên "Lưu trữ văn bản".
 2. Tạo các file và dán nội dung tương ứng từ thư mục này:
-   `Code.gs`, `TrichXuat.gs` (Tệp → + → Tập lệnh) và `Index.html`, `Styles.html`, `Script.html` (+ → HTML).
+   `Code.gs` (đã có sẵn trong dự án, thay toàn bộ nội dung) và `Index.html`, `Styles.html`, `Script.html` (+ → HTML).
 3. **Cài đặt dự án** (biểu tượng bánh răng) → tích *Hiển thị tệp kê khai "appsscript.json"*,
    rồi dán nội dung `appsscript.json`.
 4. Chọn hàm `caiDat` → **Chạy** → cấp quyền. Xem **Nhật ký thực thi** để lấy link thư mục và Google Sheet.
