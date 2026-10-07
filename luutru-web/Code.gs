@@ -238,8 +238,9 @@ var SCHEMA_AI = {
   additionalProperties: false
 };
 
-var HUONG_DAN_AI =
-  'Bạn là chuyên viên văn thư lưu trữ của cơ quan nhà nước Việt Nam. Đọc văn bản được cung cấp và trích xuất:\n' +
+// Viết dạng hàm vì Apps Script nạp Code.gs trước TrichXuat.gs (nơi khai báo LOAI_VAN_BAN)
+function huongDanAI_() {
+  return 'Bạn là chuyên viên văn thư lưu trữ của cơ quan nhà nước Việt Nam. Đọc văn bản được cung cấp và trích xuất:\n' +
   '- trichYeu: trích yếu nội dung đúng như ghi trên văn bản (dòng "V/v ..." hoặc dòng ngay dưới tên loại văn bản, ' +
   'VD "Về việc ban hành Kế hoạch ..."). Nếu văn bản không có trích yếu, viết một câu ngắn (dưới 30 từ) nêu nội dung chính.\n' +
   '- soKyHieu: số, ký hiệu văn bản (VD "15/QĐ-UBND"), rỗng nếu không có.\n' +
@@ -248,6 +249,7 @@ var HUONG_DAN_AI =
   '- coQuan: cơ quan ban hành, rỗng nếu không rõ.\n' +
   '- tomTat: tóm tắt nội dung chính bằng tiếng Việt, 3–5 câu, nêu rõ việc gì, ai thực hiện, thời hạn, số liệu quan trọng.\n' +
   'Chỉ dựa vào nội dung văn bản, không suy đoán thông tin không có. Văn bản có thể là kết quả OCR nên có lỗi chính tả, hãy sửa khi chắc chắn.';
+}
 
 function phanTichBangClaude_(key, model, noiDung, file, mime, canhBao) {
   var noiDungGui;
@@ -282,7 +284,7 @@ function phanTichBangClaude_(key, model, noiDung, file, mime, canhBao) {
       model: model,
       max_tokens: 16000,
       fallbacks: 'default',
-      system: HUONG_DAN_AI,
+      system: huongDanAI_(),
       output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA_AI } },
       messages: [{ role: 'user', content: noiDungGui }]
     })
