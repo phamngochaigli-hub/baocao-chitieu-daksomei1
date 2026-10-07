@@ -1,0 +1,187 @@
+<script>
+  var MAX_BYTES = 35 * 1024 * 1024;
+  var DS_LOAI = [];
+
+  function $(s, r) { return (r || document).querySelector(s); }
+  function goi(ten) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function (ok, loi) {
+      var r = google.script.run.withSuccessHandler(ok).withFailureHandler(loi);
+      r[ten].apply(r, args);
+    });
+  }
+  function thongBaoLoi(e) {
+    var el = $('#loiChung');
+    el.textContent = (e && e.message) || String(e);
+    el.hidden = false;
+    window.scrollTo(0, 0);
+  }
+  function ngayVN(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+    return m ? m[3] + '/' + m[2] + '/' + m[1] : (iso || '');
+  }
+  function kichThuoc(b) {
+    b = +b || 0;
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(0) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+  function loaiFile(ten, mime) {
+    var d = (String(ten).split('.').pop() || '').toLowerCase();
+    if (d === 'pdf' || /pdf/.test(mime)) return ['PDF', 'pdf'];
+    if (/^docx?$|^odt$|^rtf$/.test(d)) return [d.toUpperCase(), 'word'];
+    if (/^xlsx?$|^ods$|^csv$/.test(d)) return [d.toUpperCase(), 'excel'];
+    if (/^pptx?$|^odp$/.test(d)) return [d.toUpperCase(), 'ppt'];
+    if (/^image\//.test(mime)) return [d.toUpperCase() || 'ẢNH', 'img'];
+    return [(d && d.length <= 5 ? d.toUpperCase() : 'FILE'), ''];
+  }
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('active', x === b); });
+      document.querySelectorAll('.panel').forEach(function (p) { p.hidden = p.id !== 'tab-' + b.dataset.tab; });
+    });
+  });
+
+  // ---------- Thẻ văn bản ----------
+  function veThe(vb, canhBao) {
+    var el = $('#tplCard').content.firstElementChild.cloneNode(true);
+    var lf = loaiFile(vb.tenFile, vb.mimeType);
+    var badge = $('.badge-type', el);
+    badge.textContent = lf[0];
+    if (lf[1]) badge.classList.add(lf[1]);
+    capNhatNoiDungThe(el, vb);
+    $('.btn-tai', el).href = vb.taiVe;
+    $('.btn-xem', el).href = vb.link;
+    if (canhBao && canhBao.length) { var w = $('.warn', el); w.textContent = '⚠️ ' + canhBao.join(' · '); w.hidden = false; }
+
+    if (vb.coTheSua !== false) {
+      $('.btn-sua', el).hidden = false;
+      $('.btn-xoa', el).hidden = false;
+    }
+    var form = $('.edit', el);
+    var sel = form.elements.loaiVanBan;
+    ['' ].concat(DS_LOAI).forEach(function (l) { var o = document.createElement('option'); o.value = l; o.textContent = l || '—'; sel.appendChild(o); });
+
+    $('.btn-sua', el).onclick = function () {
+      ['trichYeu', 'soKyHieu', 'ngayBanHanh', 'loaiVanBan', 'coQuan', 'tomTat'].forEach(function (k) { form.elements[k].value = vb[k] || ''; });
+      form.hidden = !form.hidden;
+    };
+    $('.btn-huy', el).onclick = function () { form.hidden = true; };
+    form.onsubmit = function (ev) {
+      ev.preventDefault();
+      var du = {};
+      ['trichYeu', 'soKyHieu', 'ngayBanHanh', 'loaiVanBan', 'coQuan', 'tomTat'].forEach(function (k) { du[k] = form.elements[k].value.trim(); });
+      var nut = $('button[type=submit]', form); nut.disabled = true; nut.textContent = 'Đang lưu…';
+      goi('capNhatVanBan', vb.id, du).then(function () {
+        Object.assign(vb, du); capNhatNoiDungThe(el, vb); form.hidden = true;
+      }).catch(thongBaoLoi).finally(function () { nut.disabled = false; nut.textContent = 'Lưu thay đổi'; });
+    };
+    $('.btn-xoa', el).onclick = function () {
+      if (!confirm('Xoá văn bản "' + vb.trichYeu + '"?\nFile sẽ được chuyển vào thùng rác Google Drive.')) return;
+      this.disabled = true;
+      goi('xoaVanBan', vb.id).then(function () { el.remove(); }).catch(thongBaoLoi);
+    };
+    return el;
+  }
+
+  function capNhatNoiDungThe(el, vb) {
+    $('.trich-yeu', el).textContent = vb.trichYeu || '(Chưa có trích yếu)';
+    var meta = $('.meta', el);
+    meta.innerHTML = '';
+    [[vb.loaiVanBan, true], [vb.soKyHieu && 'Số: ' + vb.soKyHieu, true], [vb.ngayBanHanh && 'Ngày: ' + ngayVN(vb.ngayBanHanh)], [vb.coQuan]]
+      .forEach(function (c) { if (!c[0]) return; var s = document.createElement('span'); s.className = 'chip' + (c[1] ? ' strong' : ''); s.textContent = c[0]; meta.appendChild(s); });
+    $('.tom-tat-text', el).textContent = vb.tomTat || 'Không trích xuất được nội dung tóm tắt từ file này.';
+    $('.file-line', el).textContent = '📎 ' + vb.tenFile + ' · ' + kichThuoc(vb.dungLuong) + ' · tải lên bởi ' + vb.nguoiTai +
+      ' lúc ' + vb.thoiGianTai + (vb.nguonTrichXuat ? ' · trích xuất: ' + vb.nguonTrichXuat : '');
+  }
+
+  // ---------- Tìm kiếm ----------
+  function timKiem() {
+    var tc = { tuKhoa: $('#tuKhoa').value, loai: $('#locLoai').value, nam: $('#locNam').value, phamVi: $('#phamVi').value };
+    var kq = $('#ketQua');
+    $('#tomTatKetQua').innerHTML = '<span class="spinner" style="display:inline-block;vertical-align:middle"></span> Đang tìm…';
+    goi('timKiem', tc).then(function (r) {
+      kq.innerHTML = '';
+      $('#tomTatKetQua').textContent = r.tong
+        ? 'Tìm thấy ' + r.tong + ' văn bản' + (r.tong > r.ketQua.length ? ' (hiển thị ' + r.ketQua.length + ' văn bản mới nhất)' : '')
+        : '';
+      if (!r.tong) kq.innerHTML = '<div class="empty">Không tìm thấy văn bản phù hợp.</div>';
+      r.ketQua.forEach(function (vb) { kq.appendChild(veThe(vb)); });
+    }).catch(function (e) { $('#tomTatKetQua').textContent = ''; thongBaoLoi(e); });
+  }
+  $('#formTim').addEventListener('submit', function (e) { e.preventDefault(); timKiem(); });
+  ['#locLoai', '#locNam', '#phamVi'].forEach(function (s) { $(s).addEventListener('change', timKiem); });
+
+  // ---------- Tải lên ----------
+  var hangDoi = [], dangChay = false;
+  function themFiles(files) {
+    Array.prototype.forEach.call(files, function (f) {
+      var job = document.createElement('div');
+      job.className = 'job';
+      job.innerHTML = '<span class="spinner"></span><span class="name"></span><span class="st">Đang chờ…</span>';
+      $('.name', job).textContent = f.name + ' (' + kichThuoc(f.size) + ')';
+      $('#hangDoi').prepend(job);
+      if (f.size > MAX_BYTES) { baoLoiJob(job, 'Quá 35 MB — hãy tải thẳng vào thư mục Drive rồi bấm "Quét file mới".'); return; }
+      hangDoi.push({ file: f, el: job });
+    });
+    chayHangDoi();
+  }
+  function baoLoiJob(job, msg) {
+    job.classList.add('err');
+    $('.spinner', job).remove();
+    $('.st', job).textContent = '❌ ' + msg;
+  }
+  function docBase64(f) {
+    return new Promise(function (ok, loi) {
+      var r = new FileReader();
+      r.onload = function () { ok(String(r.result).split(',')[1] || ''); };
+      r.onerror = function () { loi(new Error('Không đọc được file')); };
+      r.readAsDataURL(f);
+    });
+  }
+  function chayHangDoi() {
+    if (dangChay || !hangDoi.length) return;
+    dangChay = true;
+    var j = hangDoi.shift();
+    $('.st', j.el).textContent = 'Đang tải lên & trích xuất trích yếu…';
+    docBase64(j.file).then(function (b64) {
+      return goi('taiLenVanBan', { ten: j.file.name, mimeType: j.file.type, base64: b64 });
+    }).then(function (vb) {
+      var the = veThe(vb, vb.canhBao);
+      var tag = document.createElement('div'); tag.className = 'ok-tag'; tag.textContent = '✅ Đã lưu vào Google Drive — kiểm tra lại trích yếu, bấm "Sửa thông tin" nếu cần';
+      the.prepend(tag);
+      j.el.replaceWith(the);
+    }).catch(function (e) { baoLoiJob(j.el, (e && e.message) || e); })
+      .finally(function () { dangChay = false; chayHangDoi(); });
+  }
+
+  var dz = $('#dropzone');
+  $('#chonFile').addEventListener('change', function () { themFiles(this.files); this.value = ''; });
+  dz.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#chonFile').click(); } });
+  ['dragenter', 'dragover'].forEach(function (t) { dz.addEventListener(t, function (e) { e.preventDefault(); dz.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (t) { dz.addEventListener(t, function (e) { e.preventDefault(); dz.classList.remove('over'); }); });
+  dz.addEventListener('drop', function (e) { if (e.dataTransfer.files.length) themFiles(e.dataTransfer.files); });
+
+  $('#btnQuet').addEventListener('click', function () {
+    var nut = this; nut.disabled = true; nut.textContent = 'Đang quét…';
+    goi('quetThuMuc').then(function (r) {
+      r.moi.forEach(function (vb) { $('#hangDoi').prepend(veThe(vb, vb.canhBao)); });
+      alert('Đã thêm ' + r.moi.length + ' file mới vào danh mục.' + (r.conLai ? '\nCòn ' + r.conLai + ' file, hãy bấm quét tiếp.' : ''));
+    }).catch(thongBaoLoi).finally(function () { nut.disabled = false; nut.textContent = 'Quét file mới trong thư mục'; });
+  });
+
+  // ---------- Khởi động ----------
+  goi('layThongTinBanDau').then(function (tt) {
+    DS_LOAI = tt.loaiVanBan;
+    $('#userEmail').textContent = tt.email;
+    ['#linkThuMuc', '#linkThuMuc2'].forEach(function (s) { $(s).href = tt.linkThuMuc; $(s).hidden = false; });
+    DS_LOAI.forEach(function (l) { var o = document.createElement('option'); o.value = l; o.textContent = l; $('#locLoai').appendChild(o); });
+    for (var y = new Date().getFullYear() + 1; y >= 2000; y--) { var o = document.createElement('option'); o.value = y; o.textContent = y; $('#locNam').appendChild(o); }
+    $('#trangThaiAI').textContent = tt.coAI
+      ? '🤖 Đang dùng Claude AI để trích yếu và tóm tắt nội dung.'
+      : 'ℹ️ Trích xuất theo thể thức văn bản hành chính. Cấu hình CLAUDE_API_KEY để tóm tắt nội dung chính xác hơn bằng AI.';
+    timKiem();
+  }).catch(thongBaoLoi);
+</script>

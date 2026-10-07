@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <?!= include('Styles'); ?>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg>
+      <div>
+        <div class="brand-title">Lưu trữ văn bản</div>
+        <div class="brand-sub">Tải lên · Tự động trích yếu · Tìm kiếm · Tải về</div>
+      </div>
+    </div>
+    <div class="user">
+      <a id="linkThuMuc" class="link-light" href="#" target="_blank" rel="noopener" hidden>Thư mục Drive ↗</a>
+      <span class="user-email" id="userEmail"><?= email ?></span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="timkiem" role="tab">🔎 Tìm kiếm & tải file</button>
+    <button class="tab" data-tab="tailen" role="tab">⬆️ Tải lên văn bản</button>
+  </nav>
+
+  <main>
+    <div id="loiChung" class="alert error" hidden></div>
+
+    <!-- ============ TÌM KIẾM ============ -->
+    <section id="tab-timkiem" class="panel">
+      <form id="formTim" class="search">
+        <div class="search-main">
+          <input id="tuKhoa" type="search" placeholder="Nhập từ khoá trích yếu, VD: kế hoạch phát triển kinh tế 2026 (có dấu hoặc không dấu)" autocomplete="off">
+          <button type="submit" class="btn primary">Tìm kiếm</button>
+        </div>
+        <div class="search-filters">
+          <label>Loại văn bản
+            <select id="locLoai"><option value="">Tất cả</option></select>
+          </label>
+          <label>Năm ban hành
+            <select id="locNam"><option value="">Tất cả</option></select>
+          </label>
+          <label>Tìm trong
+            <select id="phamVi">
+              <option value="trichYeu">Trích yếu</option>
+              <option value="tatCa" selected>Trích yếu, số ký hiệu, tên file, tóm tắt</option>
+              <option value="noiDung">Tất cả, kể cả nội dung bên trong file</option>
+            </select>
+          </label>
+        </div>
+      </form>
+      <div id="tomTatKetQua" class="result-count"></div>
+      <div id="ketQua" class="results"></div>
+    </section>
+
+    <!-- ============ TẢI LÊN ============ -->
+    <section id="tab-tailen" class="panel" hidden>
+      <label id="dropzone" class="dropzone" tabindex="0">
+        <input id="chonFile" type="file" multiple hidden>
+        <div class="dz-icon">⬆️</div>
+        <div class="dz-title">Kéo thả file vào đây hoặc bấm để chọn</div>
+        <div class="dz-sub">Mọi định dạng: PDF, Word, Excel, PowerPoint, ảnh scan, ZIP… · tối đa 35 MB/file<br>
+          App tự động đọc file, trích xuất <b>trích yếu</b>, số ký hiệu, ngày ban hành và <b>tóm tắt nội dung</b>.</div>
+      </label>
+      <div id="trangThaiAI" class="hint"></div>
+      <div id="hangDoi" class="results"></div>
+      <div class="hint">
+        File lớn hơn 35 MB: tải thẳng vào <a id="linkThuMuc2" href="#" target="_blank" rel="noopener">thư mục Drive</a>
+        rồi bấm <button id="btnQuet" class="btn small">Quét file mới trong thư mục</button>
+      </div>
+    </section>
+  </main>
+
+  <template id="tplCard">
+    <article class="card">
+      <div class="card-head">
+        <span class="badge-type"></span>
+        <div class="card-title">
+          <div class="trich-yeu"></div>
+          <div class="meta"></div>
+        </div>
+      </div>
+      <div class="tom-tat">
+        <div class="tom-tat-label">Tóm tắt nội dung</div>
+        <div class="tom-tat-text"></div>
+      </div>
+      <div class="file-line"></div>
+      <div class="warn" hidden></div>
+      <div class="actions">
+        <a class="btn primary btn-tai" target="_blank" rel="noopener">⬇️ Tải file về</a>
+        <a class="btn btn-xem" target="_blank" rel="noopener">Xem trên Drive</a>
+        <button class="btn btn-sua" type="button" hidden>✏️ Sửa thông tin</button>
+        <button class="btn danger btn-xoa" type="button" hidden>🗑️ Xoá</button>
+      </div>
+      <form class="edit" hidden>
+        <label class="full">Trích yếu<textarea name="trichYeu" rows="2" required></textarea></label>
+        <label>Số, ký hiệu<input name="soKyHieu"></label>
+        <label>Ngày ban hành<input name="ngayBanHanh" type="date"></label>
+        <label>Loại văn bản<select name="loaiVanBan"></select></label>
+        <label>Cơ quan ban hành<input name="coQuan"></label>
+        <label class="full">Tóm tắt nội dung<textarea name="tomTat" rows="4"></textarea></label>
+        <div class="full actions">
+          <button class="btn primary" type="submit">Lưu thay đổi</button>
+          <button class="btn btn-huy" type="button">Huỷ</button>
+        </div>
+      </form>
+    </article>
+  </template>
+
+  <?!= include('Script'); ?>
+</body>
+</html>
