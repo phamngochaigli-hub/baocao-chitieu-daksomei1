@@ -1,0 +1,3 @@
+[server]
+# Dung lượng tối đa mỗi file tải lên (MB)
+maxUploadSize = 1000
