@@ -1,6 +1,6 @@
 <script>
   var MAX_BYTES = 35 * 1024 * 1024;
-  var DS_LOAI = [];
+  var DS_LOAI = [], DS_NHOM = [];
 
   function $(s, r) { return (r || document).querySelector(s); }
   function goi(ten) {
@@ -16,6 +16,7 @@
     el.hidden = false;
     window.scrollTo(0, 0);
   }
+  var CAC_TRUONG = ['trichYeu', 'soKyHieu', 'ngayBanHanh', 'loaiVanBan', 'coQuan', 'tomTat', 'nhomHoSo', 'kyHop', 'nhiemKy'];
   function ngayVN(iso) {
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
     return m ? m[3] + '/' + m[2] + '/' + m[1] : (iso || '');
@@ -63,16 +64,20 @@
     var form = $('.edit', el);
     var sel = form.elements.loaiVanBan;
     ['' ].concat(DS_LOAI).forEach(function (l) { var o = document.createElement('option'); o.value = l; o.textContent = l || '—'; sel.appendChild(o); });
+    if (DS_NHOM.length) {
+      ['' ].concat(DS_NHOM).forEach(function (l) { var o = document.createElement('option'); o.value = l; o.textContent = l || '—'; form.elements.nhomHoSo.appendChild(o); });
+      form.querySelectorAll('.hdnd-only').forEach(function (x) { x.hidden = false; });
+    }
 
     $('.btn-sua', el).onclick = function () {
-      ['trichYeu', 'soKyHieu', 'ngayBanHanh', 'loaiVanBan', 'coQuan', 'tomTat'].forEach(function (k) { form.elements[k].value = vb[k] || ''; });
+      CAC_TRUONG.forEach(function (k) { if (form.elements[k]) form.elements[k].value = vb[k] || ''; });
       form.hidden = !form.hidden;
     };
     $('.btn-huy', el).onclick = function () { form.hidden = true; };
     form.onsubmit = function (ev) {
       ev.preventDefault();
       var du = {};
-      ['trichYeu', 'soKyHieu', 'ngayBanHanh', 'loaiVanBan', 'coQuan', 'tomTat'].forEach(function (k) { du[k] = form.elements[k].value.trim(); });
+      CAC_TRUONG.forEach(function (k) { if (form.elements[k] && (DS_NHOM.length || ['nhomHoSo', 'kyHop', 'nhiemKy'].indexOf(k) < 0)) du[k] = form.elements[k].value.trim(); });
       var nut = $('button[type=submit]', form); nut.disabled = true; nut.textContent = 'Đang lưu…';
       goi('capNhatVanBan', vb.id, du).then(function () {
         Object.assign(vb, du); capNhatNoiDungThe(el, vb); form.hidden = true;
@@ -90,8 +95,9 @@
     $('.trich-yeu', el).textContent = vb.trichYeu || '(Chưa có trích yếu)';
     var meta = $('.meta', el);
     meta.innerHTML = '';
-    [[vb.loaiVanBan, true], [vb.soKyHieu && 'Số: ' + vb.soKyHieu, true], [vb.ngayBanHanh && 'Ngày: ' + ngayVN(vb.ngayBanHanh)], [vb.coQuan]]
-      .forEach(function (c) { if (!c[0]) return; var s = document.createElement('span'); s.className = 'chip' + (c[1] ? ' strong' : ''); s.textContent = c[0]; meta.appendChild(s); });
+    [[vb.nhomHoSo, 'nhom'], [vb.kyHop && vb.kyHop + (vb.nhiemKy ? ' · NK ' + vb.nhiemKy : ''), 'nhom'], [vb.loaiVanBan, 'strong'],
+      [vb.soKyHieu && 'Số: ' + vb.soKyHieu, 'strong'], [vb.ngayBanHanh && 'Ngày: ' + ngayVN(vb.ngayBanHanh)], [vb.coQuan]]
+      .forEach(function (c) { if (!c[0]) return; var s = document.createElement('span'); s.className = 'chip' + (c[1] ? ' ' + c[1] : ''); s.textContent = c[0]; meta.appendChild(s); });
     $('.tom-tat-text', el).textContent = vb.tomTat || 'Không trích xuất được nội dung tóm tắt từ file này.';
     $('.file-line', el).textContent = '📎 ' + vb.tenFile + ' · ' + kichThuoc(vb.dungLuong) + ' · tải lên bởi ' + vb.nguoiTai +
       ' lúc ' + vb.thoiGianTai + (vb.nguonTrichXuat ? ' · trích xuất: ' + vb.nguonTrichXuat : '');
@@ -99,11 +105,13 @@
 
   // ---------- Tìm kiếm ----------
   function timKiem() {
-    var tc = { tuKhoa: $('#tuKhoa').value, loai: $('#locLoai').value, nam: $('#locNam').value, phamVi: $('#phamVi').value };
+    var tc = { tuKhoa: $('#tuKhoa').value, loai: $('#locLoai').value, nam: $('#locNam').value, phamVi: $('#phamVi').value,
+      nhom: $('#locNhom').value, kyHop: $('#locKyHop').value };
     var kq = $('#ketQua');
     $('#tomTatKetQua').innerHTML = '<span class="spinner" style="display:inline-block;vertical-align:middle"></span> Đang tìm…';
     goi('timKiem', tc).then(function (r) {
       kq.innerHTML = '';
+      capNhatKyHop(r.dsKyHop || []);
       $('#tomTatKetQua').textContent = r.tong
         ? 'Tìm thấy ' + r.tong + ' văn bản' + (r.tong > r.ketQua.length ? ' (hiển thị ' + r.ketQua.length + ' văn bản mới nhất)' : '')
         : '';
@@ -111,8 +119,17 @@
       r.ketQua.forEach(function (vb) { kq.appendChild(veThe(vb)); });
     }).catch(function (e) { $('#tomTatKetQua').textContent = ''; thongBaoLoi(e); });
   }
+  function capNhatKyHop(ds) {
+    var sel = $('#locKyHop'), cu = sel.value;
+    if (Array.prototype.map.call(sel.options, function (o) { return o.value; }).slice(1).join('|') === ds.join('|')) return;
+    sel.innerHTML = '<option value="">Tất cả</option>';
+    ds.forEach(function (k) { var o = document.createElement('option'); o.value = k; o.textContent = k; sel.appendChild(o); });
+    sel.value = ds.indexOf(cu) >= 0 ? cu : '';
+    var dl = $('#dsKyHopGoiY'); dl.innerHTML = '';
+    ds.forEach(function (k) { var o = document.createElement('option'); o.value = k; dl.appendChild(o); });
+  }
   $('#formTim').addEventListener('submit', function (e) { e.preventDefault(); timKiem(); });
-  ['#locLoai', '#locNam', '#phamVi'].forEach(function (s) { $(s).addEventListener('change', timKiem); });
+  ['#locLoai', '#locNam', '#phamVi', '#locNhom', '#locKyHop'].forEach(function (s) { $(s).addEventListener('change', timKiem); });
 
   // ---------- Tải lên ----------
   var hangDoi = [], dangChay = false;
@@ -124,7 +141,7 @@
       $('.name', job).textContent = f.name + ' (' + kichThuoc(f.size) + ')';
       $('#hangDoi').prepend(job);
       if (f.size > MAX_BYTES) { baoLoiJob(job, 'Quá 35 MB — hãy tải thẳng vào thư mục Drive rồi bấm "Quét file mới".'); return; }
-      hangDoi.push({ file: f, el: job });
+      hangDoi.push({ file: f, el: job, nhomHoSo: $('#upNhom').value, kyHop: $('#upKyHop').value.trim() });
     });
     chayHangDoi();
   }
@@ -147,7 +164,7 @@
     var j = hangDoi.shift();
     $('.st', j.el).textContent = 'Đang tải lên & trích xuất trích yếu…';
     docBase64(j.file).then(function (b64) {
-      return goi('taiLenVanBan', { ten: j.file.name, mimeType: j.file.type, base64: b64 });
+      return goi('taiLenVanBan', { ten: j.file.name, mimeType: j.file.type, base64: b64, nhomHoSo: j.nhomHoSo, kyHop: j.kyHop });
     }).then(function (vb) {
       var the = veThe(vb, vb.canhBao);
       var tag = document.createElement('div'); tag.className = 'ok-tag'; tag.textContent = '✅ Đã lưu vào Google Drive — kiểm tra lại trích yếu, bấm "Sửa thông tin" nếu cần';
@@ -175,6 +192,14 @@
   // ---------- Khởi động ----------
   goi('layThongTinBanDau').then(function (tt) {
     DS_LOAI = tt.loaiVanBan;
+    DS_NHOM = tt.nhomHoSo || [];
+    document.title = tt.tenApp;
+    if (DS_NHOM.length) {
+      document.querySelectorAll('.hdnd-only').forEach(function (x) { x.hidden = false; });
+      DS_NHOM.forEach(function (l) {
+        ['#locNhom', '#upNhom'].forEach(function (s) { var o = document.createElement('option'); o.value = l; o.textContent = l; $(s).appendChild(o); });
+      });
+    }
     $('#userEmail').textContent = tt.email;
     ['#linkThuMuc', '#linkThuMuc2'].forEach(function (s) { $(s).href = tt.linkThuMuc; $(s).hidden = false; });
     DS_LOAI.forEach(function (l) { var o = document.createElement('option'); o.value = l; o.textContent = l; $('#locLoai').appendChild(o); });

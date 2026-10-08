@@ -48,3 +48,8 @@ này" thì bấm *Nâng cao → Đi tới Lưu trữ văn bản*; đây là app 
 - File thuộc quyền sở hữu của người tải lên nhưng nằm trong thư mục dùng chung. Khi cán bộ nghỉ việc,
   chủ thư mục nên chuyển quyền sở hữu các file của họ.
 - Khi dùng Claude AI, nội dung văn bản được gửi tới Anthropic để phân tích; không bật nếu văn bản mật.
+
+## App lưu trữ công tác HĐND (link riêng)
+Cùng bộ code, cài thành **một dự án Apps Script thứ hai** với thư mục Drive, Sheet, danh sách người dùng và link riêng.
+Thêm **nhóm hồ sơ** (nghị quyết, kỳ họp, giám sát, cử tri, chất vấn…), **kỳ họp** và **nhiệm kỳ** tự nhận dạng, bộ lọc tương ứng.
+Xem [`HUONG-DAN-HDND.md`](HUONG-DAN-HDND.md): dán 5 file rồi chạy hàm `caiDatHDND`.
