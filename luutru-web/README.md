@@ -53,3 +53,4 @@ này" thì bấm *Nâng cao → Đi tới Lưu trữ văn bản*; đây là app 
 Cùng bộ code, cài thành **một dự án Apps Script thứ hai** với thư mục Drive, Sheet, danh sách người dùng và link riêng.
 Thêm **nhóm hồ sơ** (nghị quyết, kỳ họp, giám sát, cử tri, chất vấn…), **kỳ họp** và **nhiệm kỳ** tự nhận dạng, bộ lọc tương ứng.
 Xem [`HUONG-DAN-HDND.md`](HUONG-DAN-HDND.md): dán 5 file rồi chạy hàm `caiDatHDND`.
+App HĐND có thêm **Trợ lý AI (Gemini)** soạn thảo Nghị quyết, Kế hoạch, Quyết định, Tờ trình...; phân tích hồ sơ; lập báo cáo từ hồ sơ trong kho (xem mục "Trợ lý AI" trong hướng dẫn).

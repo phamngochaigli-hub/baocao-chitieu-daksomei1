@@ -84,6 +84,41 @@
   .upload-opts label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); min-width: 220px; flex: 1; }
   .upload-opts input { font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
   .chip.nhom { background: var(--primary-soft); color: var(--primary); border-color: transparent; font-weight: 600; }
+  .ai-warn { background: var(--warn-bg); color: var(--warn-ink); padding: 10px 14px; border-radius: 10px; font-size: 13.5px; margin-bottom: 14px; }
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .seg button { font: inherit; font-weight: 600; font-size: 14px; padding: 9px 16px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+  .seg button.on { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+  .ai-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .ai-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  .ai-form .full { grid-column: 1 / -1; }
+  .ai-form textarea, .ai-form input, .ai-form select { font: inherit; font-size: 14.5px; padding: 9px 11px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--bg); color: var(--text); min-width: 0; }
+  .ai-tk { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px 14px; margin: 0; min-width: 0; }
+  .ai-tk legend { font-size: 13px; font-weight: 600; color: var(--text); padding: 0 6px; }
+  .ai-tk-hang { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-top: 8px; }
+  .ai-tk-hang input[type=search] { flex: 1; min-width: 200px; }
+  .ai-tk-hang label { flex: 1; min-width: 160px; }
+  .ai-tim { max-height: 220px; overflow: auto; margin-top: 8px; }
+  .ai-tim label { flex-direction: row; align-items: flex-start; gap: 8px; padding: 6px 4px; border-bottom: 1px solid var(--border); color: var(--text); font-size: 13.5px; cursor: pointer; }
+  .ai-chon { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .ai-chon .chip button { border: 0; background: none; cursor: pointer; color: var(--danger); font-weight: 700; padding: 0 0 0 6px; }
+  .hint-inline { color: var(--muted); font-size: 13.5px; }
+  .ai-result { margin-top: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  .ai-result-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .ai-doc { background: #fff; color: #111; border: 1px solid var(--border); border-radius: 8px; padding: 28px 34px; margin-bottom: 8px;
+    font-family: "Times New Roman", Times, serif; font-size: 16px; line-height: 1.55; overflow-wrap: anywhere; }
+  .ai-doc p { margin: 0 0 8px; text-align: justify; }
+  .ai-doc h1, .ai-doc h2 { text-align: center; margin: 10px 0 6px; font-size: 17px; }
+  .ai-doc h3 { font-size: 16px; margin: 14px 0 6px; }
+  .ai-doc table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+  .ai-doc table.luoi th, .ai-doc table.luoi td { border: 1px solid #888; padding: 5px 8px; vertical-align: top; }
+  .ai-doc table.luoi th { background: #eef1f6; }
+  .ai-doc table.bang td { border: 0; padding: 2px 6px; }
+  .ai-doc mark { background: #fff0a8; padding: 0 2px; }
+  .ai-sua { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .ai-sua input { flex: 1; min-width: 220px; font: inherit; padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
   .dropzone { display: block; text-align: center; padding: 40px 20px; border: 2px dashed var(--border); border-radius: 16px;
     background: var(--surface); cursor: pointer; transition: border-color .15s, background .15s; }
   .dropzone:hover, .dropzone.over { border-color: var(--primary); background: var(--primary-soft); }
@@ -104,7 +139,8 @@
   @media (max-width: 640px) {
     .topbar, .tabs, main { padding-left: 16px; padding-right: 16px; }
     .search-main { flex-direction: column; }
-    .edit { grid-template-columns: 1fr; }
+    .edit, .ai-form { grid-template-columns: 1fr; }
+    .ai-doc { padding: 16px 14px; }
     .tab { padding: 12px 8px; font-size: 14px; }
   }
 </style>

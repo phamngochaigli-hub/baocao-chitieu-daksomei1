@@ -25,6 +25,7 @@
   <nav class="tabs" role="tablist">
     <button class="tab active" data-tab="timkiem" role="tab">🔎 Tìm kiếm & tải file</button>
     <button class="tab" data-tab="tailen" role="tab">⬆️ Tải lên văn bản</button>
+    <button class="tab" data-tab="troly" role="tab" id="tabTroLy" hidden>🤖 Trợ lý AI</button>
   </nav>
 
   <main>
@@ -86,6 +87,77 @@
       <div class="hint">
         File lớn hơn 35 MB: tải thẳng vào <a id="linkThuMuc2" href="#" target="_blank" rel="noopener">thư mục Drive</a>
         rồi bấm <button id="btnQuet" class="btn small">Quét file mới trong thư mục</button>
+      </div>
+    </section>
+
+    <!-- ============ TRỢ LÝ AI (GEMINI) ============ -->
+    <section id="tab-troly" class="panel" hidden>
+      <div class="ai-warn">⚠️ Bản thảo do AI (Gemini) tạo ra chỉ để tham khảo. Cán bộ phải kiểm tra thể thức, căn cứ pháp lý và số liệu trước khi sử dụng.
+        <b>Không nhập văn bản có độ mật.</b> Nội dung gửi tới dịch vụ Gemini của Google.</div>
+      <div class="seg" id="aiChe" role="tablist">
+        <button type="button" class="on" data-che="soanthao">✍️ Soạn thảo văn bản</button>
+        <button type="button" data-che="phantich">🔍 Phân tích hồ sơ</button>
+        <button type="button" data-che="baocao">📊 Lập báo cáo</button>
+      </div>
+      <form id="formAI" class="ai-form">
+        <label id="aiLoaiLbl"><span id="aiLoaiTen">Loại văn bản</span>
+          <select id="aiLoai"></select>
+        </label>
+        <label class="full">Yêu cầu, nội dung chính
+          <textarea id="aiYeuCau" rows="6" maxlength="8000" required></textarea>
+        </label>
+        <label id="aiCoQuanLbl">Cơ quan ban hành
+          <input id="aiCoQuan" maxlength="200" placeholder="VD: HỘI ĐỒNG NHÂN DÂN XÃ ...">
+        </label>
+        <label id="aiDiaDanhLbl">Địa danh
+          <input id="aiDiaDanh" maxlength="100" placeholder="VD: Đak Sơmei">
+        </label>
+        <fieldset class="ai-tk full">
+          <legend>Tài liệu tham khảo từ kho hồ sơ</legend>
+          <div class="ai-tk-hang">
+            <input id="aiTim" type="search" placeholder="Tìm tài liệu theo trích yếu để chọn…" autocomplete="off">
+            <button type="button" class="btn small" id="aiTimNut">Tìm</button>
+          </div>
+          <div id="aiKetQuaTim" class="ai-tim"></div>
+          <div id="aiDaChon" class="ai-chon"></div>
+          <div class="ai-tk-hang">
+            <label>Hoặc lấy tất cả theo Kỳ họp
+              <select id="aiKyHop"><option value="">— Không —</option></select>
+            </label>
+            <label>và/hoặc Nhóm hồ sơ
+              <select id="aiNhom"><option value="">— Không —</option></select>
+            </label>
+            <label>Mức chi tiết
+              <select id="aiMuc">
+                <option value="tomtat">Tóm tắt (nhanh, tiết kiệm)</option>
+                <option value="toanvan">Toàn văn (chính xác hơn, chậm hơn)</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+        <div class="full actions">
+          <button class="btn primary" id="aiChay" type="submit">Soạn thảo</button>
+          <span id="aiTrangThai" class="hint-inline"></span>
+        </div>
+      </form>
+
+      <div id="aiKetQua" class="ai-result" hidden>
+        <div class="ai-result-head">
+          <b>Kết quả</b> <span id="aiThongTin" class="chip"></span>
+        </div>
+        <div id="aiVanBan" class="ai-doc"></div>
+        <div id="aiGhiChu" class="warn" hidden></div>
+        <div id="aiCanhBao" class="warn" hidden></div>
+        <div id="aiNguon" class="hint"></div>
+        <div class="actions">
+          <button type="button" class="btn" id="aiChep">📋 Sao chép (giữ định dạng)</button>
+          <button type="button" class="btn primary" id="aiDocs">📄 Tạo Google Docs</button>
+          <span id="aiDocsKq" class="hint-inline"></span>
+        </div>
+        <div class="ai-sua">
+          <input id="aiChiDan" placeholder="Yêu cầu chỉnh sửa, VD: rút gọn Điều 2, thêm căn cứ, viết lại mục III trang trọng hơn…" maxlength="4000">
+          <button type="button" class="btn" id="aiSua">✏️ Chỉnh sửa</button>
+        </div>
       </div>
     </section>
   </main>

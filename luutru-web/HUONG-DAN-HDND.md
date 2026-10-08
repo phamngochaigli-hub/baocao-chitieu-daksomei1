@@ -28,6 +28,24 @@ App chung và app HĐND độc lập hoàn toàn: người trong app này không
 
 Nhận dạng tự động chỉ là gợi ý ban đầu. Nếu sai, bấm **Sửa thông tin** trên thẻ văn bản để chọn lại nhóm, kỳ họp, nhiệm kỳ.
 
+## Trợ lý AI (Gemini): soạn thảo, phân tích, báo cáo
+App HĐND có thêm tab **🤖 Trợ lý AI** (chỉ hiện khi đã cấu hình `GEMINI_API_KEY`, xem phần "Bật Trợ lý AI" bên dưới).
+
+| Chế độ | Làm được gì |
+|---|---|
+| ✍️ **Soạn thảo** | Soạn Nghị quyết, Kế hoạch, Quyết định, Tờ trình, Chương trình kỳ họp, Thông báo, Giấy mời, Giấy triệu tập, Công văn, Biên bản, Kết luận, Diễn văn/phát biểu theo thể thức văn bản hành chính (phần đầu, căn cứ, các điều, nơi nhận, chữ ký) |
+| 🔍 **Phân tích** | Hỏi đáp, so sánh, tổng hợp trên các hồ sơ đã chọn: các ý kiến cử tri, nội dung các nghị quyết, số liệu... Trả lời có dẫn nguồn [TL1], [TL2] và nêu rõ phần tài liệu không đề cập |
+| 📊 **Lập báo cáo** | Báo cáo kết quả kỳ họp; tổng hợp ý kiến, kiến nghị cử tri; hoạt động của Thường trực HĐND; kết quả giám sát, khảo sát; báo cáo thẩm tra; báo cáo công tác HĐND |
+
+**Cách dùng:** chọn chế độ → chọn loại → nhập yêu cầu → (tuỳ chọn) chọn **tài liệu tham khảo từ kho**: tìm và tích từng tài liệu,
+hoặc lấy tất cả theo **Kỳ họp / Nhóm hồ sơ** → bấm nút. Kết quả hiện như văn bản; sau đó có thể:
+- **Chỉnh sửa** bằng lời ("rút gọn Điều 2", "thêm căn cứ", "viết lại mục III trang trọng hơn");
+- **Sao chép** (giữ định dạng) để dán vào Word;
+- **Tạo Google Docs** (lưu trong thư mục con `BanThao_AI` của kho) để biên tập tiếp.
+
+Chỗ AI không có thông tin (số tờ trình, căn cứ pháp lý, ngày tháng...) được **đánh dấu vàng `[CẦN BỔ SUNG: ...]`** thay vì tự bịa;
+ghi chú dành cho người soạn hiện ở dưới văn bản. Mức chi tiết **Tóm tắt** nhanh và tiết kiệm; **Toàn văn** chính xác hơn nhưng chậm hơn và tốn hơn.
+
 ## Cài đặt từng bước
 
 ### Bước 1. Tạo dự án Apps Script mới
@@ -112,3 +130,25 @@ Có thể cập nhật app chung lên cùng bộ code; sổ danh mục cũ tự 
 | "App chưa được cài đặt" | Chạy `caiDatHDND` |
 | Nhóm hồ sơ gán sai | Bấm **Sửa thông tin** chọn lại, hoặc chọn nhóm trước khi tải lên |
 | `... is not defined` | Thiếu file hoặc dán thiếu nội dung `Code.gs`; kiểm tra có đủ 5 file |
+
+## Bật Trợ lý AI (Gemini)
+1. Lấy khoá API tại https://aistudio.google.com/apikey (đăng nhập tài khoản Google, bấm **Create API key**).
+2. **Quan trọng về dữ liệu:** với gói miễn phí, Google có thể dùng nội dung gửi lên để cải tiến sản phẩm và nhân sự có thể đọc;
+   gói trả phí (bật thanh toán cho dự án chứa khoá) thì Google cam kết không dùng nội dung để huấn luyện. Hồ sơ công tác HĐND nên dùng khoá **gói trả phí**;
+   kiểm tra điều khoản hiện hành của Google trước khi dùng. Không đưa văn bản có độ mật vào Trợ lý AI.
+3. Vào **Cài đặt dự án ⚙️ → Thuộc tính tập lệnh**, thêm:
+
+| Thuộc tính | Giá trị | Ghi chú |
+|---|---|---|
+| `GEMINI_API_KEY` | khoá vừa lấy | **bắt buộc**; có khoá thì tab Trợ lý AI mới hiện |
+| `TEN_XA` | VD `Đak Sơmei` | tự điền "HỘI ĐỒNG NHÂN DÂN XÃ ĐAK SƠMEI" và địa danh vào bản thảo |
+| `GEMINI_MODEL` | (tuỳ chọn) tên mô hình | bỏ trống thì app tự hỏi Google và chọn mô hình **flash** mới nhất đang dùng được |
+| `GEMINI_LOAI` | (tuỳ chọn) `pro` | ưu tiên mô hình pro: chất lượng cao hơn nhưng chậm và tốn hơn |
+| `GEMINI_GIOI_HAN` | (tuỳ chọn) số, mặc định 40 | số lượt AI tối đa mỗi người mỗi ngày (quản trị viên không bị giới hạn) |
+
+4. Mở `Code.gs`, chọn hàm **`kiemTraGemini`** → **▶ Chạy**. Nhật ký phải ghi "Mô hình được chọn: …" và câu trả lời của Gemini.
+   Nếu báo lỗi, đọc nội dung lỗi (khoá sai, chưa bật API, hết hạn mức...).
+5. Dán `Code.gs`, `Index.html`, `Styles.html`, `Script.html` bản mới, rồi **Triển khai → Quản lý hoạt động triển khai → bút chì ✏️ → Phiên bản mới → Triển khai**. Mở link, thấy tab **🤖 Trợ lý AI**.
+
+**Lưu ý:** mỗi lượt gọi có thể mất 30–90 giây; bản thảo dài mà bị ngắt thì chọn "Tóm tắt", giảm số tài liệu tham khảo hoặc bấm "Chỉnh sửa" để yêu cầu viết tiếp.
+Tên mô hình của Google thay đổi theo thời gian; nếu tính năng báo "không tìm thấy mô hình", chạy `kiemTraGemini` hoặc đặt `GEMINI_MODEL`.

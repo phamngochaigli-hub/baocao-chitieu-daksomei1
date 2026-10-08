@@ -126,6 +126,10 @@
     ds.forEach(function (k) { var o = document.createElement('option'); o.value = k; o.textContent = k; sel.appendChild(o); });
     sel.value = ds.indexOf(cu) >= 0 ? cu : '';
     var dl = $('#dsKyHopGoiY'); dl.innerHTML = '';
+    var sa = $('#aiKyHop'), cuA = sa.value;
+    sa.innerHTML = '<option value="">— Không —</option>';
+    ds.forEach(function (k) { var o = document.createElement('option'); o.value = k; o.textContent = k; sa.appendChild(o); });
+    sa.value = ds.indexOf(cuA) >= 0 ? cuA : '';
     ds.forEach(function (k) { var o = document.createElement('option'); o.value = k; dl.appendChild(o); });
   }
   $('#formTim').addEventListener('submit', function (e) { e.preventDefault(); timKiem(); });
@@ -189,11 +193,120 @@
     }).catch(thongBaoLoi).finally(function () { nut.disabled = false; nut.textContent = 'Quét file mới trong thư mục'; });
   });
 
+  // ---------- Trợ lý AI (Gemini) ----------
+  var AI = { che: 'soanthao', ids: {}, truoc: '', lanCuoi: null, tt: null };
+  var CHE_VAN = {
+    soanthao: { nut: 'Soạn thảo', loai: 'Loại văn bản cần soạn', mau: 'VD: Soạn Nghị quyết thông qua Kế hoạch phát triển kinh tế - xã hội năm 2028 của xã. Căn cứ Tờ trình của UBND xã, Báo cáo thẩm tra của Ban Kinh tế - Xã hội. Nêu các chỉ tiêu chính: …' },
+    phantich: { nut: 'Phân tích', loai: '', mau: 'VD: So sánh các ý kiến, kiến nghị cử tri qua các kỳ họp và nêu nhóm vấn đề được quan tâm nhiều nhất; hoặc: Các nghị quyết đã ban hành có nội dung nào chưa được báo cáo kết quả thực hiện?' },
+    baocao: { nut: 'Lập báo cáo', loai: 'Loại báo cáo', mau: 'VD: Lập báo cáo kết quả Kỳ họp thứ 3, nêu kết quả các nội dung đã thông qua, số liệu chính, ý kiến chất vấn, nhiệm vụ sau kỳ họp.' }
+  };
+
+  function aiDatChe(che) {
+    AI.che = che;
+    document.querySelectorAll('#aiChe button').forEach(function (b) { b.classList.toggle('on', b.dataset.che === che); });
+    var cv = CHE_VAN[che], sel = $('#aiLoai');
+    $('#aiLoaiLbl').hidden = !cv.loai;
+    $('#aiLoaiTen').textContent = cv.loai;
+    var ds = che === 'baocao' ? AI.tt.loaiBaoCao : AI.tt.loaiSoan;
+    sel.innerHTML = '';
+    ds.forEach(function (l) { var o = document.createElement('option'); o.value = l; o.textContent = l; sel.appendChild(o); });
+    $('#aiYeuCau').placeholder = cv.mau;
+    $('#aiChay').textContent = cv.nut;
+    var vanBan = che !== 'phantich';
+    $('#aiCoQuanLbl').hidden = !vanBan; $('#aiDiaDanhLbl').hidden = !vanBan;
+  }
+  document.querySelectorAll('#aiChe button').forEach(function (b) { b.addEventListener('click', function () { if (AI.tt) aiDatChe(b.dataset.che); }); });
+
+  function veChipChon() {
+    var kv = $('#aiDaChon'); kv.innerHTML = '';
+    Object.keys(AI.ids).forEach(function (id) {
+      var s = document.createElement('span'); s.className = 'chip strong';
+      s.appendChild(document.createTextNode(AI.ids[id]));
+      var x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.title = 'Bỏ chọn';
+      x.onclick = function () { delete AI.ids[id]; veChipChon(); var cb = $('#aiKetQuaTim input[value="' + id + '"]'); if (cb) cb.checked = false; };
+      s.appendChild(x); kv.appendChild(s);
+    });
+  }
+  function aiTim() {
+    var kq = $('#aiKetQuaTim'); kq.textContent = 'Đang tìm…';
+    goi('timKiem', { tuKhoa: $('#aiTim').value, phamVi: 'tatCa' }).then(function (r) {
+      kq.innerHTML = '';
+      if (!r.ketQua.length) { kq.textContent = 'Không có tài liệu phù hợp.'; return; }
+      r.ketQua.slice(0, 30).forEach(function (vb) {
+        var lb = document.createElement('label'), cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.value = vb.id; cb.checked = !!AI.ids[vb.id];
+        var nhan = (vb.trichYeu || vb.tenFile) + (vb.soKyHieu ? ' (' + vb.soKyHieu + ')' : '') + (vb.kyHop ? ' · ' + vb.kyHop : '');
+        cb.onchange = function () { if (cb.checked) AI.ids[vb.id] = nhan.length > 70 ? nhan.slice(0, 70) + '…' : nhan; else delete AI.ids[vb.id]; veChipChon(); };
+        lb.appendChild(cb); lb.appendChild(document.createTextNode(' ' + nhan)); kq.appendChild(lb);
+      });
+    }).catch(function (e) { kq.textContent = ''; thongBaoLoi(e); });
+  }
+  $('#aiTimNut').addEventListener('click', aiTim);
+  $('#aiTim').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); aiTim(); } });
+
+  function aiDangChay(bat, msg) {
+    ['aiChay', 'aiSua', 'aiDocs', 'aiChep'].forEach(function (id) { $('#' + id).disabled = bat; });
+    $('#aiTrangThai').innerHTML = bat ? '<span class="spinner" style="display:inline-block;vertical-align:middle"></span> ' + msg : '';
+  }
+  function aiHienKetQua(r, yc) {
+    AI.truoc = r.text; AI.lanCuoi = yc;
+    $('#aiKetQua').hidden = false;
+    $('#aiVanBan').innerHTML = r.html;
+    $('#aiThongTin').textContent = 'Mô hình ' + r.model + ' · còn ' + r.conLai + ' lượt hôm nay';
+    var gc = $('#aiGhiChu'); gc.hidden = !r.ghiChu; gc.textContent = r.ghiChu ? '📝 Ghi chú cho người soạn: ' + r.ghiChu : '';
+    var cb = $('#aiCanhBao'); cb.hidden = !(r.canhBao && r.canhBao.length); cb.textContent = '⚠️ ' + (r.canhBao || []).join(' · ');
+    $('#aiNguon').textContent = r.taiLieu.length ? 'Tài liệu đã dùng: ' + r.taiLieu.map(function (t) { return '[' + t.ma + '] ' + (t.trichYeu || t.id) + (t.soKyHieu ? ' (' + t.soKyHieu + ')' : ''); }).join(' · ') : '';
+    $('#aiDocsKq').textContent = ''; $('#aiChiDan').value = '';
+    $('#aiKetQua').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function aiGui(yc, msg) {
+    aiDangChay(true, msg);
+    goi('troLyAI', yc).then(function (r) { aiHienKetQua(r, yc); }).catch(thongBaoLoi).finally(function () { aiDangChay(false); });
+  }
+  $('#formAI').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var yc = { che: AI.che, loai: AI.che === 'phantich' ? '' : $('#aiLoai').value, yeuCau: $('#aiYeuCau').value,
+      coQuan: $('#aiCoQuan').value, diaDanh: $('#aiDiaDanh').value, ids: Object.keys(AI.ids),
+      loc: { kyHop: $('#aiKyHop').value, nhom: $('#aiNhom').value }, mucChiTiet: $('#aiMuc').value };
+    $('#loiChung').hidden = true;
+    aiGui(yc, 'Gemini đang xử lý, có thể mất 30–90 giây…');
+  });
+  $('#aiSua').addEventListener('click', function () {
+    var cd = $('#aiChiDan').value.trim();
+    if (!cd || !AI.lanCuoi) { thongBaoLoi(new Error('Hãy nhập yêu cầu chỉnh sửa.')); return; }
+    $('#loiChung').hidden = true;
+    aiGui(Object.assign({}, AI.lanCuoi, { truoc: AI.truoc, chiDan: cd }), 'Gemini đang chỉnh sửa…');
+  });
+  $('#aiChep').addEventListener('click', function () {
+    var vung = $('#aiVanBan'), sel = window.getSelection(), rg = document.createRange();
+    rg.selectNodeContents(vung); sel.removeAllRanges(); sel.addRange(rg);
+    var ok = false; try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+    $('#aiDocsKq').textContent = ok ? '✅ Đã sao chép, dán vào Word hoặc Google Docs.' : 'Không sao chép được tự động. Hãy bôi đen văn bản và nhấn Ctrl + C.';
+  });
+  $('#aiDocs').addEventListener('click', function () {
+    var tieuDe = (AI.lanCuoi && AI.lanCuoi.loai) || 'Bản thảo';
+    aiDangChay(true, 'Đang tạo Google Docs…');
+    goi('taoGoogleDocs', tieuDe, AI.truoc).then(function (r) {
+      var kv = $('#aiDocsKq'); kv.innerHTML = '✅ Đã tạo: ';
+      var a = document.createElement('a'); a.href = r.link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = r.ten; kv.appendChild(a);
+      kv.appendChild(document.createTextNode(' (lưu trong thư mục BanThao_AI)'));
+    }).catch(thongBaoLoi).finally(function () { aiDangChay(false); });
+  });
+
   // ---------- Khởi động ----------
   goi('layThongTinBanDau').then(function (tt) {
     DS_LOAI = tt.loaiVanBan;
     DS_NHOM = tt.nhomHoSo || [];
     document.title = tt.tenApp;
+    AI.tt = tt;
+    if (tt.troLyAI) {
+      $('#tabTroLy').hidden = false;
+      $('#aiCoQuan').value = (tt.aiMacDinh || {}).coQuan || '';
+      $('#aiDiaDanh').value = (tt.aiMacDinh || {}).diaDanh || '';
+      (tt.nhomHoSo || []).forEach(function (l) { var o = document.createElement('option'); o.value = l; o.textContent = l; $('#aiNhom').appendChild(o); });
+      aiDatChe('soanthao');
+    }
     if (DS_NHOM.length) {
       document.querySelectorAll('.hdnd-only').forEach(function (x) { x.hidden = false; });
       DS_NHOM.forEach(function (l) {
