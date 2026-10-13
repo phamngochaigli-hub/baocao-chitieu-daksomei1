@@ -315,6 +315,7 @@
     apDungNhan(document);
     if (NHAN.kyHopGoiY) $('#upKyHop').placeholder = NHAN.kyHopGoiY;
     document.title = tt.tenApp;
+    $('#phienBan').textContent = 'Phiên bản mã nguồn: ' + (tt.phienBan || 'CŨ, chưa cập nhật Code.gs');
     AI.tt = tt;
     if (tt.troLyAI) {
       $('#tabTroLy').hidden = false;

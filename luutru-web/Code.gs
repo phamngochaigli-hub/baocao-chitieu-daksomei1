@@ -17,6 +17,7 @@ var TIEU_DE_COT = ['ID file', 'Tên file', 'Định dạng', 'Dung lượng (byt
   'Ngày ban hành', 'Loại văn bản', 'Cơ quan ban hành', 'Trích yếu', 'Tóm tắt nội dung',
   'Người tải lên', 'Thời gian tải', 'Link Drive', 'Nội dung (trích đoạn)', 'Nguồn trích xuất',
   'Nhóm hồ sơ', 'Kỳ họp', 'Nhiệm kỳ'];
+var PHIEN_BAN_MA = '2026-10-13c';   // hiển thị cuối trang để biết Code.gs nào đang chạy
 var MAX_NOI_DUNG = 45000;          // giới hạn ô Google Sheet là 50.000 ký tự
 var MAX_KY_TU_AI = 300000;         // độ dài văn bản tối đa gửi cho AI
 var CLAUDE_MODEL_MAC_DINH = 'claude-opus-5-5';
@@ -228,6 +229,7 @@ function layThongTinBanDau() {
     tenApp: prof.ten,
     nhomHoSo: prof.nhomHoSo || [],
     nhan: prof.nhan || {},
+    phienBan: PHIEN_BAN_MA,
     troLyAI: !!(prof.troLyAI && u.cauHinh.GEMINI_API_KEY),
     aiMacDinh: macDinhCoQuan_(u.cauHinh),
     loaiSoan: Object.keys(MAU_VAN_BAN),
@@ -246,7 +248,7 @@ function layThongTinBanDau() {
  */
 function taiLenVanBan(f) {
   var u = kiemTraNguoiDung_();
-  var mime = f.mimeType || doanMime_(f.ten);
+  var mime = mimeThucTe_(f.mimeType, f.ten);
   var blob = Utilities.newBlob(Utilities.base64Decode(f.base64), mime, f.ten);
   var file = DriveApp.getFolderById(u.cauHinh.FOLDER_ID).createFile(blob);
   try {
@@ -287,7 +289,7 @@ function lapChiMuc_(file, u, tuyChon) {
 /** Đọc file, trích xuất thông tin; trả về {banGhi, canhBao} (chưa ghi vào danh mục). */
 function phanTichFile_(file, u, tuyChon) {
   var prof = profile_();
-  var mime = file.getMimeType();
+  var mime = mimeThucTe_(file.getMimeType(), file.getName());
   var canhBao = [];
   var noiDung = '';
   try {
@@ -351,6 +353,7 @@ function trichXuatLaiDong_(u, sh, dong, id) {
   var file = DriveApp.getFileById(id);
   var kq = phanTichFile_(file, u, null);
   var bg = kq.banGhi;
+  Logger.log(bg.tenFile + ' [' + bg.mimeType + ']: đọc được ' + String(bg.noiDung || '').length + ' ký tự' + (kq.canhBao.length ? ' | ' + kq.canhBao.join(' | ') : ''));
   var tu1 = COT.indexOf(COT_PHAN_TICH[0]) + 1, tu2 = COT.indexOf(COT_PHAN_TICH_2[0]) + 1;
   sh.getRange(dong, tu1, 1, COT_PHAN_TICH.length).setValues([COT_PHAN_TICH.map(function (k) { return String(bg[k] || ''); })]);
   sh.getRange(dong, tu2, 1, COT_PHAN_TICH_2.length).setValues([COT_PHAN_TICH_2.map(function (k) { return String(bg[k] || ''); })]);
@@ -391,6 +394,14 @@ function trichXuatLaiTatCa() {
   Logger.log('Đã trích xuất lại ' + xong + ' văn bản' + (loi ? ', lỗi ' + loi : '') + (con ? '. Còn ' + con + ' văn bản, hãy chạy lại hàm này.' : '.'));
 }
 
+/** Loại file thực tế: ưu tiên theo đuôi file (trình duyệt/WPS có thể báo loại lạ như application/octet-stream hoặc application/wps-office.docx). */
+function mimeThucTe_(mime, ten) {
+  var duoi = String(ten || '').split('.').pop().toLowerCase();
+  var theoDuoi = DUOI_MIME[duoi];
+  if (theoDuoi && theoDuoi !== 'application/zip') return theoDuoi;
+  return mime || theoDuoi || 'application/octet-stream';
+}
+
 function doanMime_(ten) {
   var duoi = String(ten).split('.').pop().toLowerCase();
   return DUOI_MIME[duoi] || 'application/octet-stream';
@@ -417,7 +428,7 @@ function docChuThuan_(blob) {
 
 /** Lấy chữ từ file: chuyển tạm sang Google Docs/Sheets/Slides (có OCR tiếng Việt), đọc chữ rồi xoá bản tạm. */
 function layNoiDungChu_(blob, mime, ten) {
-  if (laFileChuThuan_(mime)) return docChuThuan_(blob);
+  if (laFileChuThuan_(mime)) { var thuan = docChuThuan_(blob); return hongChu_(thuan) ? '' : thuan; }
   var dich = MIME_DOCS.test(mime) ? MimeType.GOOGLE_DOCS
     : MIME_SHEETS.test(mime) ? MimeType.GOOGLE_SHEETS
     : MIME_SLIDES.test(mime) ? MimeType.GOOGLE_SLIDES : null;
