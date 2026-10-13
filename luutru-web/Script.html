@@ -63,6 +63,7 @@
     if (vb.coTheSua !== false) {
       $('.btn-sua', el).hidden = false;
       $('.btn-xoa', el).hidden = false;
+      $('.btn-lai', el).hidden = false;
     }
     var form = $('.edit', el);
     apDungNhan(el);
@@ -86,6 +87,14 @@
       goi('capNhatVanBan', vb.id, du).then(function () {
         Object.assign(vb, du); capNhatNoiDungThe(el, vb); form.hidden = true;
       }).catch(thongBaoLoi).finally(function () { nut.disabled = false; nut.textContent = 'Lưu thay đổi'; });
+    };
+    $('.btn-lai', el).onclick = function () {
+      if (!confirm('Đọc lại file và tạo lại trích yếu, tóm tắt, nhóm hồ sơ?\nThông tin bạn đã sửa tay của văn bản này sẽ bị thay bằng kết quả mới.')) return;
+      var nut = this; nut.disabled = true; nut.textContent = 'Đang đọc lại…';
+      goi('trichXuatLaiVanBan', vb.id).then(function (moi) {
+        Object.assign(vb, moi); capNhatNoiDungThe(el, vb);
+        var w = $('.warn', el); w.hidden = false; w.textContent = '✅ Đã trích xuất lại từ file.' + (moi.canhBao && moi.canhBao.length ? ' ⚠️ ' + moi.canhBao.join(' · ') : '');
+      }).catch(thongBaoLoi).finally(function () { nut.disabled = false; nut.textContent = '🔄 Trích xuất lại'; });
     };
     $('.btn-xoa', el).onclick = function () {
       if (!confirm('Xoá văn bản "' + vb.trichYeu + '"?\nFile sẽ được chuyển vào thùng rác Google Drive.')) return;

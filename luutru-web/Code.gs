@@ -277,6 +277,15 @@ function quetThuMuc() {
 }
 
 function lapChiMuc_(file, u, tuyChon) {
+  var kq0 = phanTichFile_(file, u, tuyChon);
+  ghiBanGhi_(u.cauHinh, kq0.banGhi);
+  var kq = rutGon_(kq0.banGhi);
+  kq.canhBao = kq0.canhBao;
+  return kq;
+}
+
+/** Đọc file, trích xuất thông tin; trả về {banGhi, canhBao} (chưa ghi vào danh mục). */
+function phanTichFile_(file, u, tuyChon) {
   var prof = profile_();
   var mime = file.getMimeType();
   var canhBao = [];
@@ -322,10 +331,64 @@ function lapChiMuc_(file, u, tuyChon) {
     link: file.getUrl(), noiDung: noiDung.slice(0, MAX_NOI_DUNG), nguonTrichXuat: nguon,
     nhomHoSo: tt.nhomHoSo, kyHop: tt.kyHop, nhiemKy: tt.nhiemKy
   };
-  ghiBanGhi_(u.cauHinh, banGhi);
-  var kq = rutGon_(banGhi);
-  kq.canhBao = canhBao;
+  return { banGhi: banGhi, canhBao: canhBao };
+}
+
+// ---------- trích xuất lại các văn bản đã lưu bị lỗi chữ ----------
+
+/** True nếu chuỗi trông như dữ liệu nhị phân bị đọc nhầm thành chữ (ký tự lạ, mất dấu tiếng Việt). */
+function hongChu_(s) {
+  s = String(s || '');
+  if (!s) return false;
+  var dau = s.slice(0, 3000);
+  return /^PK[\u0003\u0004]/.test(s) || (dau.match(/\uFFFD/g) || []).length > 3 || /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(dau);
+}
+
+var COT_PHAN_TICH = ['soKyHieu', 'ngayBanHanh', 'loaiVanBan', 'coQuan', 'trichYeu', 'tomTat'];
+var COT_PHAN_TICH_2 = ['noiDung', 'nguonTrichXuat', 'nhomHoSo', 'kyHop', 'nhiemKy'];
+
+function trichXuatLaiDong_(u, sh, dong, id) {
+  var file = DriveApp.getFileById(id);
+  var kq = phanTichFile_(file, u, null);
+  var bg = kq.banGhi;
+  var tu1 = COT.indexOf(COT_PHAN_TICH[0]) + 1, tu2 = COT.indexOf(COT_PHAN_TICH_2[0]) + 1;
+  sh.getRange(dong, tu1, 1, COT_PHAN_TICH.length).setValues([COT_PHAN_TICH.map(function (k) { return String(bg[k] || ''); })]);
+  sh.getRange(dong, tu2, 1, COT_PHAN_TICH_2.length).setValues([COT_PHAN_TICH_2.map(function (k) { return String(bg[k] || ''); })]);
   return kq;
+}
+
+/** Trích xuất lại một văn bản (ghi đè trích yếu, tóm tắt… bằng kết quả đọc lại từ file). */
+function trichXuatLaiVanBan(id) {
+  var u = kiemTraNguoiDung_();
+  var sh = sheet_(u.cauHinh);
+  var dong = timDong_(u.cauHinh, id);
+  if (dong < 0) throw new Error('Không tìm thấy văn bản.');
+  kiemTraQuyenSua_(u, sh, dong);
+  var kq = trichXuatLaiDong_(u, sh, dong, id);
+  var cu = docTatCa_(u.cauHinh).filter(function (r) { return r.id === id; })[0];
+  var o = rutGon_(cu);
+  o.coTheSua = true;
+  o.canhBao = kq.canhBao;
+  return o;
+}
+
+/**
+ * Chạy trong trình soạn thảo (quản trị viên): trích xuất lại TẤT CẢ văn bản bị lỗi chữ trong danh mục.
+ * Chạy lại nhiều lần nếu còn sót (mỗi lần tối đa khoảng 4 phút).
+ */
+function trichXuatLaiTatCa() {
+  var p = PropertiesService.getScriptProperties().getProperties();
+  if (!p.FOLDER_ID || !p.SHEET_ID) throw new Error('App chưa được cài đặt.');
+  var u = { email: String(Session.getActiveUser().getEmail() || '').toLowerCase(), laQuanTri: true, cauHinh: p };
+  var sh = sheet_(p);
+  var bat = Date.now(), xong = 0, loi = 0, con = 0;
+  docTatCa_(p).forEach(function (r) {
+    if (!(hongChu_(r.noiDung) || hongChu_(r.trichYeu) || hongChu_(r.tomTat))) return;
+    if (Date.now() - bat > 4 * 60 * 1000) { con++; return; }
+    try { trichXuatLaiDong_(u, sh, r._dong, r.id); xong++; }
+    catch (e) { loi++; Logger.log('Lỗi với ' + r.tenFile + ': ' + e.message); }
+  });
+  Logger.log('Đã trích xuất lại ' + xong + ' văn bản' + (loi ? ', lỗi ' + loi : '') + (con ? '. Còn ' + con + ' văn bản, hãy chạy lại hàm này.' : '.'));
 }
 
 function doanMime_(ten) {
@@ -333,9 +396,28 @@ function doanMime_(ten) {
   return DUOI_MIME[duoi] || 'application/octet-stream';
 }
 
+/**
+ * File chữ thuần (đọc trực tiếp). Chú ý: KHÔNG dùng /xml/ vì loại file Word, Excel, PowerPoint mới
+ * (…openxmlformats-officedocument…) cũng chứa chữ "xml" nhưng là file nén nhị phân, phải chuyển sang Google Docs mới lấy được chữ.
+ */
+function laFileChuThuan_(mime) {
+  return /^text\/(plain|csv|markdown|xml)$/.test(mime) || /^application\/(json|xml)$/.test(mime);
+}
+
+/** Giải mã file chữ: ưu tiên UTF-8; nếu có ký tự lỗi thì thử bảng mã tiếng Việt cũ (Windows-1258). */
+function docChuThuan_(blob) {
+  var chu = blob.getDataAsString('UTF-8');
+  if (chu.indexOf('\uFFFD') < 0) return chu.replace(/^\uFEFF/, '');
+  try {
+    var thu = blob.getDataAsString('Windows-1258');
+    if ((thu.match(/\uFFFD/g) || []).length < (chu.match(/\uFFFD/g) || []).length) return thu;
+  } catch (e) { /* không hỗ trợ bảng mã này */ }
+  return chu;
+}
+
 /** Lấy chữ từ file: chuyển tạm sang Google Docs/Sheets/Slides (có OCR tiếng Việt), đọc chữ rồi xoá bản tạm. */
 function layNoiDungChu_(blob, mime, ten) {
-  if (/^text\/(plain|csv)|json|xml/.test(mime)) return blob.getDataAsString('UTF-8');
+  if (laFileChuThuan_(mime)) return docChuThuan_(blob);
   var dich = MIME_DOCS.test(mime) ? MimeType.GOOGLE_DOCS
     : MIME_SHEETS.test(mime) ? MimeType.GOOGLE_SHEETS
     : MIME_SLIDES.test(mime) ? MimeType.GOOGLE_SLIDES : null;

@@ -87,3 +87,10 @@ Dán lại file mới rồi **Triển khai → Quản lý hoạt động triển
 | `... is not defined` | Dán thiếu nội dung `Code.gs`, kiểm tra có đủ 5 file |
 
 App Tuyên giáo hiện chưa có tab Trợ lý AI (soạn thảo đề cương, báo cáo bằng Gemini). Có thể bổ sung khi cần.
+
+## Sửa lỗi chữ lạ khi tóm tắt file Word, Excel, PowerPoint (bản cập nhật 10/2026)
+Bản code cũ đọc nhầm file Word (`.docx`), Excel (`.xlsx`) và PowerPoint (`.pptx`) như file nhị phân, nên trích yếu và tóm tắt hiện ký tự lạ.
+Bản mới đã sửa. Với các văn bản **đã lưu bị lỗi**:
+- **Từng văn bản:** bấm nút **🔄 Trích xuất lại** trên thẻ văn bản (chỉ người tải lên hoặc quản trị viên). Thông tin đã sửa tay của văn bản đó sẽ bị thay bằng kết quả đọc lại.
+- **Hàng loạt:** trong Apps Script mở `Code.gs`, chọn hàm **`trichXuatLaiTatCa`** → **▶ Chạy**. Hàm chỉ động tới các văn bản có chữ hỏng và giữ nguyên các văn bản khác. Nhật ký ghi số văn bản đã xử lý; nếu còn sót thì chạy lại.
+

@@ -152,3 +152,10 @@ Có thể cập nhật app chung lên cùng bộ code; sổ danh mục cũ tự 
 
 **Lưu ý:** mỗi lượt gọi có thể mất 30–90 giây; bản thảo dài mà bị ngắt thì chọn "Tóm tắt", giảm số tài liệu tham khảo hoặc bấm "Chỉnh sửa" để yêu cầu viết tiếp.
 Tên mô hình của Google thay đổi theo thời gian; nếu tính năng báo "không tìm thấy mô hình", chạy `kiemTraGemini` hoặc đặt `GEMINI_MODEL`.
+
+## Sửa lỗi chữ lạ khi tóm tắt file Word, Excel, PowerPoint (bản cập nhật 10/2026)
+Bản code cũ đọc nhầm file Word (`.docx`), Excel (`.xlsx`) và PowerPoint (`.pptx`) như file nhị phân, nên trích yếu và tóm tắt hiện ký tự lạ.
+Bản mới đã sửa. Với các văn bản **đã lưu bị lỗi**:
+- **Từng văn bản:** bấm nút **🔄 Trích xuất lại** trên thẻ văn bản (chỉ người tải lên hoặc quản trị viên). Thông tin đã sửa tay của văn bản đó sẽ bị thay bằng kết quả đọc lại.
+- **Hàng loạt:** trong Apps Script mở `Code.gs`, chọn hàm **`trichXuatLaiTatCa`** → **▶ Chạy**. Hàm chỉ động tới các văn bản có chữ hỏng và giữ nguyên các văn bản khác. Nhật ký ghi số văn bản đã xử lý; nếu còn sót thì chạy lại.
+
