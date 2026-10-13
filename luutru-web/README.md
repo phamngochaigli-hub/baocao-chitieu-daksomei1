@@ -54,3 +54,8 @@ Cùng bộ code, cài thành **một dự án Apps Script thứ hai** với thư
 Thêm **nhóm hồ sơ** (nghị quyết, kỳ họp, giám sát, cử tri, chất vấn…), **kỳ họp** và **nhiệm kỳ** tự nhận dạng, bộ lọc tương ứng.
 Xem [`HUONG-DAN-HDND.md`](HUONG-DAN-HDND.md): dán 5 file rồi chạy hàm `caiDatHDND`.
 App HĐND có thêm **Trợ lý AI (Gemini)** soạn thảo Nghị quyết, Kế hoạch, Quyết định, Tờ trình...; phân tích hồ sơ; lập báo cáo từ hồ sơ trong kho (xem mục "Trợ lý AI" trong hướng dẫn).
+
+## App lưu trữ công tác Tuyên giáo (link riêng)
+Cùng bộ code, cài thành **dự án Apps Script thứ ba** với thư mục `LuuTru_TuyenGiao`, Sheet, danh sách người dùng và link riêng.
+15 nhóm hồ sơ tuyên giáo, chuyên đề/sự kiện, nhiệm kỳ/giai đoạn tự nhận dạng, nhận cả ảnh/video tư liệu.
+Xem [`HUONG-DAN-TUYENGIAO.md`](HUONG-DAN-TUYENGIAO.md): dán 5 file rồi chạy hàm `caiDatTuyenGiao`.

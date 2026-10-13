@@ -1,6 +1,9 @@
 <script>
   var MAX_BYTES = 35 * 1024 * 1024;
-  var DS_LOAI = [], DS_NHOM = [];
+  var DS_LOAI = [], DS_NHOM = [], NHAN = {};
+  function apDungNhan(goc) {
+    goc.querySelectorAll('[data-nhan]').forEach(function (e) { if (NHAN[e.dataset.nhan]) e.textContent = NHAN[e.dataset.nhan]; });
+  }
 
   function $(s, r) { return (r || document).querySelector(s); }
   function goi(ten) {
@@ -62,6 +65,7 @@
       $('.btn-xoa', el).hidden = false;
     }
     var form = $('.edit', el);
+    apDungNhan(el);
     var sel = form.elements.loaiVanBan;
     ['' ].concat(DS_LOAI).forEach(function (l) { var o = document.createElement('option'); o.value = l; o.textContent = l || '—'; sel.appendChild(o); });
     if (DS_NHOM.length) {
@@ -95,7 +99,7 @@
     $('.trich-yeu', el).textContent = vb.trichYeu || '(Chưa có trích yếu)';
     var meta = $('.meta', el);
     meta.innerHTML = '';
-    [[vb.nhomHoSo, 'nhom'], [vb.kyHop && vb.kyHop + (vb.nhiemKy ? ' · NK ' + vb.nhiemKy : ''), 'nhom'], [vb.loaiVanBan, 'strong'],
+    [[vb.nhomHoSo, 'nhom'], [vb.kyHop && vb.kyHop + (vb.nhiemKy ? ' · ' + (NHAN.nkNgan || 'NK') + ' ' + vb.nhiemKy : ''), 'nhom'], [vb.loaiVanBan, 'strong'],
       [vb.soKyHieu && 'Số: ' + vb.soKyHieu, 'strong'], [vb.ngayBanHanh && 'Ngày: ' + ngayVN(vb.ngayBanHanh)], [vb.coQuan]]
       .forEach(function (c) { if (!c[0]) return; var s = document.createElement('span'); s.className = 'chip' + (c[1] ? ' ' + c[1] : ''); s.textContent = c[0]; meta.appendChild(s); });
     $('.tom-tat-text', el).textContent = vb.tomTat || 'Không trích xuất được nội dung tóm tắt từ file này.';
@@ -298,6 +302,9 @@
   goi('layThongTinBanDau').then(function (tt) {
     DS_LOAI = tt.loaiVanBan;
     DS_NHOM = tt.nhomHoSo || [];
+    NHAN = tt.nhan || {};
+    apDungNhan(document);
+    if (NHAN.kyHopGoiY) $('#upKyHop').placeholder = NHAN.kyHopGoiY;
     document.title = tt.tenApp;
     AI.tt = tt;
     if (tt.troLyAI) {

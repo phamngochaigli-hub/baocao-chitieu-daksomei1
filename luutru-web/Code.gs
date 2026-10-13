@@ -56,6 +56,56 @@ var PROFILES = {
   }
 };
 
+// Nhãn hiển thị cho hai trường phụ (cột kyHop, nhiemKy) theo từng hồ sơ, và mô tả cho AI trích xuất
+PROFILES.HDND.nhan = { kyHop: 'Kỳ họp', nhiemKy: 'Nhiệm kỳ HĐND', nkNgan: 'NK', kyHopGoiY: 'VD: Kỳ họp thứ 3' };
+PROFILES.HDND.ai = {
+  nhom: 'phân loại hồ sơ công tác của HĐND xã vào đúng một nhóm trong: ',
+  kyHop: 'kỳ họp HĐND mà văn bản thuộc về (VD "Kỳ họp thứ 3"), rỗng nếu không có',
+  nhiemKy: 'nhiệm kỳ HĐND (VD "2026-2031"), rỗng nếu không nêu'
+};
+
+var NHOM_TG = {
+  VAN_KIEN: 'Văn kiện, nghị quyết, chỉ thị của Đảng',
+  CAP_TREN: 'Hướng dẫn, chỉ đạo của cấp trên',
+  KE_HOACH: 'Kế hoạch, chương trình công tác tuyên giáo',
+  QUAN_TRIET: 'Học tập, quán triệt nghị quyết',
+  DE_CUONG: 'Đề cương, tài liệu tuyên truyền',
+  SINH_HOAT: 'Sinh hoạt chi bộ, thông tin nội bộ',
+  BCV: 'Báo cáo viên, tuyên truyền viên',
+  DU_LUAN: 'Nắm bắt tình hình tư tưởng, dư luận xã hội',
+  DAU_TRANH: 'Đấu tranh, phản bác quan điểm sai trái',
+  BAO_CHI: 'Báo chí, truyền thông, thông tin cơ sở',
+  LY_LUAN: 'Giáo dục lý luận chính trị',
+  HCM: 'Học tập và làm theo tư tưởng, đạo đức, phong cách Hồ Chí Minh',
+  BAO_CAO: 'Báo cáo, thống kê',
+  TU_LIEU: 'Hình ảnh, video, tư liệu tuyên truyền',
+  KHAC: 'Khác'
+};
+
+PROFILES.TUYENGIAO = {
+  ma: 'TUYENGIAO', ten: 'Lưu trữ công tác Tuyên giáo', moTa: 'Văn kiện · Tuyên truyền · Học tập · Tư tưởng · Tìm kiếm theo trích yếu',
+  thuMuc: 'LuuTru_TuyenGiao', sheet: 'Danh mục hồ sơ công tác Tuyên giáo',
+  nhomHoSo: [NHOM_TG.VAN_KIEN, NHOM_TG.CAP_TREN, NHOM_TG.KE_HOACH, NHOM_TG.QUAN_TRIET, NHOM_TG.DE_CUONG, NHOM_TG.SINH_HOAT,
+    NHOM_TG.BCV, NHOM_TG.DU_LUAN, NHOM_TG.DAU_TRANH, NHOM_TG.BAO_CHI, NHOM_TG.LY_LUAN, NHOM_TG.HCM, NHOM_TG.BAO_CAO,
+    NHOM_TG.TU_LIEU, NHOM_TG.KHAC],
+  loaiVanBan: ['Nghị quyết', 'Chỉ thị', 'Kết luận', 'Thông tri', 'Quy định', 'Quy chế', 'Thông báo', 'Hướng dẫn', 'Kế hoạch',
+    'Chương trình', 'Đề cương tuyên truyền', 'Báo cáo', 'Bản tin', 'Công văn', 'Quyết định', 'Tờ trình', 'Biên bản',
+    'Giấy mời', 'Tài liệu học tập', 'Danh sách', 'Khác'],
+  nhan: { kyHop: 'Chuyên đề, sự kiện', nhiemKy: 'Nhiệm kỳ, giai đoạn', nkNgan: 'GĐ', kyHopGoiY: 'VD: Kỷ niệm 80 năm Quốc khánh 2/9' },
+  ai: {
+    nhom: 'phân loại hồ sơ công tác tuyên giáo của Đảng ủy xã vào đúng một nhóm trong: ',
+    kyHop: 'chuyên đề hoặc sự kiện mà văn bản thuộc về (VD "Kỷ niệm 80 năm Quốc khánh 2/9", "Chuyên đề học tập năm 2026"), rỗng nếu không có',
+    nhiemKy: 'nhiệm kỳ hoặc giai đoạn (VD "2025-2030"), rỗng nếu không nêu'
+  }
+};
+
+/** Tiêu đề cột của sổ danh mục, hai cột phụ đổi tên theo từng hồ sơ. */
+function tieuDeCot_(prof) {
+  var t = TIEU_DE_COT.slice();
+  if (prof && prof.nhan) { t[COT.indexOf('kyHop')] = prof.nhan.kyHop; t[COT.indexOf('nhiemKy')] = prof.nhan.nhiemKy; }
+  return t;
+}
+
 function profile_() {
   var ma = PropertiesService.getScriptProperties().getProperty('PROFILE');
   return PROFILES[ma] || PROFILES.CHUNG;
@@ -93,7 +143,7 @@ function caiDat() {
     var sh = ss.getSheets()[0];
     sh.setName('DanhMuc');
     sh.getRange('A:R').setNumberFormat('@');  // để dạng chữ, tránh Sheets tự đổi ngày/số ký hiệu
-    sh.getRange(1, 1, 1, TIEU_DE_COT.length).setValues([TIEU_DE_COT]).setFontWeight('bold');
+    sh.getRange(1, 1, 1, TIEU_DE_COT.length).setValues([tieuDeCot_(prof)]).setFontWeight('bold');
     sh.setFrozenRows(1);
     sheetId = ss.getId();
   }
@@ -107,6 +157,12 @@ function caiDat() {
 /** Dùng cho dự án HĐND: đặt PROFILE=HDND rồi cài đặt (tạo thư mục LuuTru_HDND và Sheet riêng). */
 function caiDatHDND() {
   PropertiesService.getScriptProperties().setProperty('PROFILE', 'HDND');
+  caiDat();
+}
+
+/** Dùng cho dự án Tuyên giáo: đặt PROFILE=TUYENGIAO rồi cài đặt (tạo thư mục LuuTru_TuyenGiao và Sheet riêng). */
+function caiDatTuyenGiao() {
+  PropertiesService.getScriptProperties().setProperty('PROFILE', 'TUYENGIAO');
   caiDat();
 }
 
@@ -156,7 +212,7 @@ function sheet_(p) {
   if (sh.getRange(1, COT.length).getValue() === '') {   // sổ danh mục cũ chưa có các cột mới
     if (sh.getMaxColumns() < COT.length) sh.insertColumnsAfter(sh.getMaxColumns(), COT.length - sh.getMaxColumns());
     sh.getRange(1, 1, sh.getMaxRows(), COT.length).setNumberFormat('@');
-    sh.getRange(1, 1, 1, COT.length).setValues([TIEU_DE_COT]).setFontWeight('bold');
+    sh.getRange(1, 1, 1, COT.length).setValues([tieuDeCot_(profile_())]).setFontWeight('bold');
   }
   return sh;
 }
@@ -171,6 +227,7 @@ function layThongTinBanDau() {
     coAI: !!u.cauHinh.CLAUDE_API_KEY,
     tenApp: prof.ten,
     nhomHoSo: prof.nhomHoSo || [],
+    nhan: prof.nhan || {},
     troLyAI: !!(prof.troLyAI && u.cauHinh.GEMINI_API_KEY),
     aiMacDinh: macDinhCoQuan_(u.cauHinh),
     loaiSoan: Object.keys(MAU_VAN_BAN),
@@ -233,7 +290,7 @@ function lapChiMuc_(file, u, tuyChon) {
   var tt = trichXuatThongTin(noiDung, file.getName(), dsLoai_(prof));
   tt.nhomHoSo = ''; tt.kyHop = ''; tt.nhiemKy = '';
   if (prof.nhomHoSo) {
-    var h = trichXuatHDND_(noiDung, file.getName(), tt);
+    var h = prof.ma === 'TUYENGIAO' ? trichXuatTuyenGiao_(noiDung, file.getName(), tt, mime) : trichXuatHDND_(noiDung, file.getName(), tt);
     tt.nhomHoSo = h.nhomHoSo; tt.kyHop = h.kyHop; tt.nhiemKy = h.nhiemKy;
   }
   var nguon = noiDung ? 'Quy tắc thể thức' : 'Tên file';
@@ -322,8 +379,8 @@ function schemaAI_(prof) {
   };
   if (prof.nhomHoSo) {
     sc.properties.nhomHoSo = { type: 'string', enum: prof.nhomHoSo };
-    sc.properties.kyHop = { type: 'string', description: 'Kỳ họp HĐND liên quan, VD "Kỳ họp thứ 3", rỗng nếu không có' };
-    sc.properties.nhiemKy = { type: 'string', description: 'Nhiệm kỳ HĐND, VD "2026-2031", rỗng nếu không có' };
+    sc.properties.kyHop = { type: 'string', description: prof.ai.kyHop };
+    sc.properties.nhiemKy = { type: 'string', description: prof.ai.nhiemKy };
     sc.required = sc.required.concat(['nhomHoSo', 'kyHop', 'nhiemKy']);
   }
   return sc;
@@ -333,9 +390,9 @@ function schemaAI_(prof) {
 function huongDanAI_(prof) {
   prof = prof || profile_();
   var themHDND = !prof.nhomHoSo ? '' :
-    '- nhomHoSo: phân loại hồ sơ công tác của HĐND xã vào đúng một nhóm trong: ' + prof.nhomHoSo.join('; ') + '.\n' +
-    '- kyHop: kỳ họp HĐND mà văn bản thuộc về (VD "Kỳ họp thứ 3"), rỗng nếu không có.\n' +
-    '- nhiemKy: nhiệm kỳ HĐND (VD "2026-2031"), rỗng nếu không nêu.\n';
+    '- nhomHoSo: ' + prof.ai.nhom + prof.nhomHoSo.join('; ') + '.\n' +
+    '- kyHop: ' + prof.ai.kyHop + '.\n' +
+    '- nhiemKy: ' + prof.ai.nhiemKy + '.\n';
   return 'Bạn là chuyên viên văn thư lưu trữ của cơ quan nhà nước Việt Nam. Đọc văn bản được cung cấp và trích xuất:\n' +
   '- trichYeu: trích yếu nội dung đúng như ghi trên văn bản (dòng "V/v ..." hoặc dòng ngay dưới tên loại văn bản, ' +
   'VD "Về việc ban hành Kế hoạch ..."). Nếu văn bản không có trích yếu, viết một câu ngắn (dưới 30 từ) nêu nội dung chính.\n' +
@@ -573,7 +630,7 @@ function trichXuatThongTin(text, tenFile, dsLoai) {
   var kq = { trichYeu: '', soKyHieu: '', ngayBanHanh: '', loaiVanBan: '', coQuan: '', tomTat: '' };
   var dau = dong.slice(0, 80).join('\n');
 
-  var so = dau.match(/S[ốo]\s*[:.]?\s*(\d+[\w\-–.]*\s*\/\s*[\wĐđ\-–\/.]+)/i);
+  var so = dau.match(/S[ốo]\s*[:.]?\s*(\d+[\wĐđ\-–.]*\s*\/\s*[\wĐđ\-–\/.]+)/i);
   if (so) kq.soKyHieu = so[1].replace(/\s+/g, '').replace(/[.,;]+$/, '');
 
   var ngay = dau.match(RE_NGAY);
@@ -588,7 +645,7 @@ function trichXuatThongTin(text, tenFile, dsLoai) {
   var cq = [];
   for (var i = 0; i < Math.min(dong.length, 8) && cq.length < 2; i++) {
     var l = dong[i];
-    if (!l) continue;
+    if (!l || /^ĐẢNG CỘNG SẢN VIỆT NAM\s*\*?$/i.test(l)) continue;
     if (/^S[ốo]\s*[:.]/i.test(l) || laDauDe_(l)) break;
     if (l === l.toUpperCase() && /[A-ZÀ-Ỹ]/.test(l) && l.length <= 80) cq.push(l);
   }
@@ -1081,4 +1138,57 @@ function mdToHtml_(md) {
   }
   dongDS();
   return out.join('\n');
+}
+
+// ============================================================================
+// ===================== Nhận dạng hồ sơ công tác Tuyên giáo ==================
+// ============================================================================
+
+function nhanDangNhomTG_(s, tt) {
+  var N = NHOM_TG;
+  if (/(phan bac|dau tranh|quan diem sai trai|thu dich|chong pha)/.test(s)) return N.DAU_TRANH;
+  if (/ho chi minh/.test(s) && /(hoc tap va lam theo|dao duc|phong cach)/.test(s)) return N.HCM;
+  if (/(du luan|nam bat tinh hinh|tinh hinh tu tuong|dien bien tu tuong|nam bat tu tuong)/.test(s)) return N.DU_LUAN;
+  if (/(bao cao vien|tuyen truyen vien|doi ngu bao cao)/.test(s)) return N.BCV;
+  if (/(quan triet|hoc tap nghi quyet|hoc tap chuyen de|hoi nghi hoc tap)/.test(s)) return N.QUAN_TRIET;
+  if (/(de cuong|cau hoi goi y|tai lieu tuyen truyen)/.test(s)) return N.DE_CUONG;
+  if (/(ly luan chinh tri|trung cap ly luan|boi duong chinh tri|lop boi duong)/.test(s)) return N.LY_LUAN;
+  if (/(sinh hoat chi bo|ban tin|thong tin noi bo|tai lieu sinh hoat)/.test(s)) return N.SINH_HOAT;
+  if (/(bao chi|truyen thanh|mang xa hoi|trang thong tin|cong thong tin|truyen thong|zalo|facebook)/.test(s)) return N.BAO_CHI;
+  return '';
+}
+
+/**
+ * Từ nội dung chữ: đoán nhóm hồ sơ, chuyên đề/sự kiện, nhiệm kỳ/giai đoạn của hồ sơ tuyên giáo.
+ * Chỉ là gợi ý ban đầu: người dùng có thể sửa trên thẻ văn bản hoặc chọn sẵn khi tải lên.
+ */
+function trichXuatTuyenGiao_(text, tenFile, tt, mime) {
+  var N = NHOM_TG;
+  var ten = String(tenFile || '');
+  var chu = String(text || '').normalize('NFC');
+  var vung = chu.slice(0, 800);
+  var kq = { nhomHoSo: '', kyHop: '', nhiemKy: '' };
+  var gop = ten + '\n' + vung;
+
+  var m = /k[ỷy]\s+ni[ệe]m\s+(\d{1,3}\s+n[ăa]m[^\n,.;()]{3,80})/i.exec(gop);
+  if (m) kq.kyHop = 'Kỷ niệm ' + m[1].trim();
+  if (!kq.kyHop && (m = /chuyên đề\s*(?:học tập\s*)?(?:năm\s*\d{4}\s*)?[:\-–]?\s*[“"]?([^”"\n]{5,100})/i.exec(gop))) kq.kyHop = 'Chuyên đề: ' + m[1].trim();
+  var nk = /(nhi[ệe]m\s+k[ỳy]|giai\s+đo[ạa]n)\s*(20\d\d)\s*[-–—]\s*(20\d\d)/i.exec(gop);
+  if (nk) kq.nhiemKy = nk[2] + '-' + nk[3];
+
+  var cq = boDau(tt.coQuan), loai = boDau(tt.loaiVanBan);
+  var capTren = !/(^|\s)xa(\s|$)/.test(cq) &&
+    /(^|\s)(tinh|trung uong|quoc hoi|chinh phu|thu tuong|so|bo|huyen|thanh pho|ban tuyen giao|ban bi thu|bo chinh tri)(\s|$)/.test(cq);
+  var banHanhDang = /(^|\s)(dang|dang uy|dang bo|tinh uy|trung uong|ban chap hanh|ban bi thu|bo chinh tri|chi bo)(\s|$)/.test(cq);
+
+  if (/^(image|video)\//.test(String(mime || ''))) kq.nhomHoSo = N.TU_LIEU;
+  else if (/^(nghi quyet|chi thi|ket luan|quy dinh|quy che|thong tri)$/.test(loai) && banHanhDang) kq.nhomHoSo = N.VAN_KIEN;
+  else kq.nhomHoSo = nhanDangNhomTG_(boDau(ten + ' ' + vung), tt) || nhanDangNhomTG_(boDau(ten + ' ' + chu.slice(0, 3000)), tt);
+  if (!kq.nhomHoSo) {
+    if (/^(ke hoach|chuong trinh)$/.test(loai)) kq.nhomHoSo = capTren ? N.CAP_TREN : N.KE_HOACH;
+    else if (/^(bao cao|danh sach)$/.test(loai) || /thong ke/.test(boDau(ten))) kq.nhomHoSo = N.BAO_CAO;
+    else if (capTren) kq.nhomHoSo = N.CAP_TREN;
+    else kq.nhomHoSo = N.KHAC;
+  }
+  return kq;
 }

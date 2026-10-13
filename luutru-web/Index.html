@@ -42,7 +42,7 @@
           <label class="hdnd-only" hidden>Nhóm hồ sơ
             <select id="locNhom"><option value="">Tất cả</option></select>
           </label>
-          <label class="hdnd-only" hidden>Kỳ họp
+          <label class="hdnd-only" hidden><span data-nhan="kyHop">Kỳ họp</span>
             <select id="locKyHop"><option value="">Tất cả</option></select>
           </label>
           <label>Loại văn bản
@@ -77,7 +77,7 @@
         <label>Nhóm hồ sơ của các file sắp tải lên
           <select id="upNhom"><option value="">Tự động nhận dạng</option></select>
         </label>
-        <label>Kỳ họp (nếu có)
+        <label><span><span data-nhan="kyHop">Kỳ họp</span> (nếu có)</span>
           <input id="upKyHop" list="dsKyHopGoiY" placeholder="VD: Kỳ họp thứ 3" maxlength="100" autocomplete="off">
           <datalist id="dsKyHopGoiY"></datalist>
         </label>
@@ -121,7 +121,7 @@
           <div id="aiKetQuaTim" class="ai-tim"></div>
           <div id="aiDaChon" class="ai-chon"></div>
           <div class="ai-tk-hang">
-            <label>Hoặc lấy tất cả theo Kỳ họp
+            <label><span>Hoặc lấy tất cả theo <span data-nhan="kyHop">Kỳ họp</span></span>
               <select id="aiKyHop"><option value="">— Không —</option></select>
             </label>
             <label>và/hoặc Nhóm hồ sơ
@@ -190,8 +190,8 @@
         <label>Loại văn bản<select name="loaiVanBan"></select></label>
         <label>Cơ quan ban hành<input name="coQuan"></label>
         <label class="hdnd-only" hidden>Nhóm hồ sơ<select name="nhomHoSo"></select></label>
-        <label class="hdnd-only" hidden>Kỳ họp<input name="kyHop" maxlength="100"></label>
-        <label class="hdnd-only" hidden>Nhiệm kỳ HĐND<input name="nhiemKy" placeholder="VD: 2026-2031" maxlength="20"></label>
+        <label class="hdnd-only" hidden><span data-nhan="kyHop">Kỳ họp</span><input name="kyHop" maxlength="100"></label>
+        <label class="hdnd-only" hidden><span data-nhan="nhiemKy">Nhiệm kỳ HĐND</span><input name="nhiemKy" placeholder="VD: 2026-2031" maxlength="20"></label>
         <label class="full">Tóm tắt nội dung<textarea name="tomTat" rows="4"></textarea></label>
         <div class="full actions">
           <button class="btn primary" type="submit">Lưu thay đổi</button>
